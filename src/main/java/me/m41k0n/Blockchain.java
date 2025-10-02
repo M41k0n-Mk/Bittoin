@@ -10,16 +10,17 @@ public class Blockchain {
 
     public Blockchain(int difficulty) {
         this.difficulty = difficulty;
-        chain.add(new Block(0, "Genesis Block", "0", difficulty));
+        Transaction coinbase = new Transaction("GENESIS", "Satoshi", 50.0);
+        chain.add(new Block(0, List.of(coinbase), "0", difficulty));
     }
 
     public Block getLatestBlock() {
         return chain.getLast();
     }
 
-    public void addBlock(String data) {
+    public void addBlock(List<Transaction> transactions) {
         Block previous = getLatestBlock();
-        Block newBlock = new Block(previous.getIndex() + 1, data, previous.getHash(), difficulty);
+        Block newBlock = new Block(previous.getIndex() + 1, transactions, previous.getHash(), difficulty);
         chain.add(newBlock);
     }
 
@@ -29,7 +30,7 @@ public class Blockchain {
             Block previous = chain.get(i - 1);
             if (!current.getPreviousHash().equals(previous.getHash())) return false;
             String expectedHash = Block.calculateHash(
-                    current.getIndex(), current.getTimestamp(), current.getData(), current.getPreviousHash(), current.getNonce()
+                    current.getIndex(), current.getTimestamp(), current.getTransactions(), current.getPreviousHash(), current.getNonce()
             );
             if (!current.getHash().equals(expectedHash)) return false;
         }
