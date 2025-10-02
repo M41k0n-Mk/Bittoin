@@ -5,6 +5,7 @@ import java.util.*;
 public class Blockchain {
 
     private final List<Block> chain = new ArrayList<>();
+    private final Map<String, Double> balances = new HashMap<>();
     private final int difficulty;
     private final Map<String, UTXO> utxoSet = new HashMap<>();
 
@@ -67,8 +68,31 @@ public class Blockchain {
             }
             outputIndex++;
         }
-
+        recalculateBalances();
         return true;
+    }
+
+    public void replaceChain(List<Block> newChain) {
+        if (newChain.size() > chain.size()) {
+            chain.clear();
+            chain.addAll(newChain);
+            recalculateBalances();
+        }
+    }
+
+    private void recalculateBalances() {
+        balances.clear();
+        for (Block block : chain) {
+            for (Transaction tx : block.getTransactions()) {
+                if (!tx.isValid()) continue;
+                if (tx.from().equals("COINBASE")) {
+                    balances.put(tx.to(), balances.getOrDefault(tx.to(), 0.0) + tx.amount());
+                } else {
+                    balances.put(tx.from(), balances.getOrDefault(tx.from(), 0.0) - tx.amount());
+                    balances.put(tx.to(), balances.getOrDefault(tx.to(), 0.0) + tx.amount());
+                }
+            }
+        }
     }
 
     private boolean isTransactionValid(Transaction tx) {
