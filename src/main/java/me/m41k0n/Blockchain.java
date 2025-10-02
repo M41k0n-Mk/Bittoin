@@ -10,7 +10,7 @@ public class Blockchain {
 
     public Blockchain(int difficulty) {
         this.difficulty = difficulty;
-        Transaction coinbase = new Transaction("GENESIS", "Satoshi", 50.0);
+        Transaction coinbase = Transaction.createCoinbase("Satoshi", 50.0);
         chain.add(new Block(0, List.of(coinbase), "0", difficulty));
     }
 
