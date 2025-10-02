@@ -1,13 +1,16 @@
 package me.m41k0n;
 
 import lombok.Getter;
+import lombok.ToString;
+
+import java.io.Serializable;
 import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.List;
 
 @Getter
-public class Block {
-
+@ToString
+public class Block implements Serializable {
     private final int index;
     private final Instant timestamp;
     private final List<Transaction> transactions;
