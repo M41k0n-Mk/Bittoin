@@ -31,12 +31,12 @@ public class SimpleNode {
                     Socket clientSocket = serverSocket.accept();
                     handleClient(clientSocket);
                 } catch (Exception e) {
-                    System.out.println("Erro ao aceitar conexão: " + e.getMessage());
+                    System.out.println("Error accepting connection: " + e.getMessage());
                     e.printStackTrace();
                 }
             }
         } catch (IOException e) {
-            System.out.println("Erro ao iniciar servidor: " + e.getMessage());
+            System.out.println("Error starting server: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -47,20 +47,20 @@ public class SimpleNode {
                 ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream())
         ) {
             socket.setSoTimeout(8000);
-            System.out.println("Recebendo conexão de " + socket.getInetAddress() + ":" + socket.getPort());
+            System.out.println("Receiving connection from " + socket.getInetAddress() + ":" + socket.getPort());
             Object commandObj = in.readObject();
-            System.out.println("Comando recebido: " + commandObj);
+            System.out.println("Command received: " + commandObj);
 
             if ("GET_BLOCKCHAIN".equals(commandObj)) {
                 out.writeObject(blockchain.getBlocks());
                 out.flush();
             } else if ("NEW_BLOCK".equals(commandObj)) {
                 Block newBlock = (Block) in.readObject();
-                System.out.println("Novo bloco recebido do peer.");
+                System.out.println("New block received from peer.");
                 tryAddBlock(newBlock);
             }
         } catch (Exception e) {
-            System.out.println("Erro ao lidar com cliente: " + e.getMessage());
+            System.out.println("Error handling client: " + e.getMessage());
             e.printStackTrace();
         } finally {
             try { socket.close(); } catch (Exception ignored) {}
@@ -92,12 +92,12 @@ public class SimpleNode {
                     out.flush();
                     Object response = in.readObject();
                     if (response instanceof List) {
-                        System.out.println("Blockchain recebida do peer " + peer);
+                        System.out.println("Blockchain received from peer " + peer);
                         return (List<Block>) response;
                     }
                 } catch (Exception e) {
                     attempts++;
-                    System.out.println("Erro ao pedir blockchain ao peer " + peer + " tentativa " + attempts);
+                    System.out.println("Error requesting blockchain from peer " + peer + " attempt " + attempts);
                     try { Thread.sleep(200); } catch (InterruptedException ignored) {}
                 }
             }
@@ -116,15 +116,15 @@ public class SimpleNode {
                     out.writeObject(block);
                     out.flush();
                     sent = true;
-                    System.out.println("Bloco enviado ao peer " + peer);
+                    System.out.println("Block sent to peer " + peer);
                 } catch (Exception e) {
                     attempts++;
-                    System.out.println("Erro ao enviar bloco ao peer " + peer + " tentativa " + attempts + ": " + e.getMessage());
+                    System.out.println("Error sending block to peer " + peer + " attempt " + attempts + ": " + e.getMessage());
                     try { Thread.sleep(200); } catch (InterruptedException ignored) {}
                 }
             }
             if (!sent) {
-                System.out.println("Não foi possível enviar bloco ao peer " + peer + " após 3 tentativas.");
+                System.out.println("Could not send block to peer " + peer + " after 3 attempts.");
             }
         }
     }
