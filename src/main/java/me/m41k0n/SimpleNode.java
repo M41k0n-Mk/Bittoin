@@ -57,6 +57,7 @@ public class SimpleNode {
             } else if ("NEW_BLOCK".equals(commandObj)) {
                 Block newBlock = (Block) in.readObject();
                 System.out.println("New block received from peer.");
+                // Adaptação: Recebe qual miner address do peer minerou o bloco
                 tryAddBlock(newBlock);
             }
         } catch (Exception e) {
@@ -69,8 +70,19 @@ public class SimpleNode {
 
     private void tryAddBlock(Block block) {
         List<Block> localChain = blockchain.getBlocks();
+        // Adaptação: pega minerador do bloco recebido (coinbase transaction)
+        String minerAddress = null;
+        List<Transaction> txs = block.getTransactions();
+        if (!txs.isEmpty() && txs.getFirst().from().equals("COINBASE")) {
+            minerAddress = txs.getFirst().to();
+        }
         if (block.getIndex() == localChain.size()) {
-            boolean ok = blockchain.addBlock(block.getTransactions());
+            boolean ok;
+            if (minerAddress != null) {
+                ok = blockchain.addBlock(txs.subList(1, txs.size()), minerAddress); // remove coinbase, reaplica com reward e halving
+            } else {
+                ok = blockchain.addBlock(txs, null); // fallback
+            }
             if (ok) System.out.println("Added new block from peer!");
         } else if (block.getIndex() > localChain.size()) {
             List<Block> peerChain = requestChainFromPeer();

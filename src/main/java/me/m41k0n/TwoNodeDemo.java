@@ -23,7 +23,8 @@ public class TwoNodeDemo {
         try { Thread.sleep(1500); } catch (InterruptedException ignored) {}
 
         Transaction tA1 = Transaction.createSigned(satoshi, alice.getAddress(), 25.0);
-        chainA.addBlock(List.of(tA1));
+        chainA.addBlock(List.of(tA1), satoshi.getAddress()); // <-- miner address!
+
         nodeA.broadcastBlock(chainA.getLatestBlock());
 
         // Wait for propagation
