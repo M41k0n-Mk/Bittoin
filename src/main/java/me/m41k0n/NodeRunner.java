@@ -39,7 +39,7 @@ public class NodeRunner {
 
         Scanner scanner = new Scanner(System.in);
         System.out.println("Node started on port " + port);
-        System.out.println("Enter transactions: <de> <para> <quantia>");
+        System.out.println("Enter transactions: <from> <to> <amount>");
         System.out.println("Or type 'state' to show the current blockchain state and wallet balances.");
 
         while (true) {
@@ -67,7 +67,7 @@ public class NodeRunner {
 
             String[] parts = line.trim().split("\\s+");
             if (parts.length != 3) {
-                System.out.println("Formato inválido. Use: <de> <para> <quantia>");
+                System.out.println("Invalid format. Use: <from> <to> <amount>");
                 continue;
             }
 
@@ -83,22 +83,23 @@ public class NodeRunner {
             };
             double amount;
             try { amount = Double.parseDouble(parts[2]); } catch (Exception e) {
-                System.out.println("Valor inválido.");
+                System.out.println("Invalid amount.");
                 continue;
             }
             if (fromWallet != null && toAddr != null) {
                 Transaction tx = Transaction.createSigned(fromWallet, toAddr, amount);
-                boolean ok = blockchain.addBlock(List.of(tx));
+                // Adaptation: the sender is the miner in this simulation
+                boolean ok = blockchain.addBlock(List.of(tx), fromWallet.getAddress());
                 if (ok) {
                     node.broadcastBlock(blockchain.getLatestBlock());
-                    System.out.println("Transação criada, assinada e bloco propagado!");
+                    System.out.println("Transaction created, signed, and block broadcasted!");
                 } else {
-                    System.out.println("Transação inválida ou sem saldo.");
+                    System.out.println("Invalid transaction or insufficient balance.");
                 }
             } else {
-                System.out.println("Carteira não encontrada.");
+                System.out.println("Wallet not found.");
             }
         }
-        System.out.println("Encerrando nó na porta " + port);
+        System.out.println("Shutting down node on port " + port);
     }
 }

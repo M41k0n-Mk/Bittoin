@@ -9,12 +9,20 @@ public class Blockchain {
     private final int difficulty;
     private final Map<String, UTXO> utxoSet = new HashMap<>();
 
+    private static final double INITIAL_REWARD = 25.0;
+    private static final int HALVING_INTERVAL = 100;
+
     public Blockchain(int difficulty, String satoshiAddress) {
         this.difficulty = difficulty;
-        Transaction coinbase = Transaction.createCoinbase(satoshiAddress, 50.0);
+        Transaction coinbase = Transaction.createCoinbase(satoshiAddress, getMiningReward(0));
         Block genesis = new Block(0, List.of(coinbase), "0", difficulty);
         chain.add(genesis);
-        utxoSet.put(genesis.getHash() + ":0", new UTXO(genesis.getHash(), 0, satoshiAddress, 50.0));
+        utxoSet.put(genesis.getHash() + ":0", new UTXO(genesis.getHash(), 0, satoshiAddress, coinbase.amount()));
+    }
+
+    public static double getMiningReward(int blockHeight) {
+        int halvings = blockHeight / HALVING_INTERVAL;
+        return INITIAL_REWARD / Math.pow(2, halvings);
     }
 
     public double getBalance(String address) {
@@ -32,8 +40,14 @@ public class Blockchain {
         return chain.getLast();
     }
 
-    public boolean addBlock(List<Transaction> transactions) {
-        for (Transaction tx : transactions) {
+    public boolean addBlock(List<Transaction> transactions, String minerAddress) {
+        int blockHeight = chain.size();
+        Transaction coinbaseTx = Transaction.createCoinbase(minerAddress, getMiningReward(blockHeight));
+        List<Transaction> txsWithCoinbase = new ArrayList<>();
+        txsWithCoinbase.add(coinbaseTx);
+        txsWithCoinbase.addAll(transactions);
+
+        for (Transaction tx : txsWithCoinbase) {
             if (!isTransactionValid(tx)) {
                 System.out.println("Invalid transaction: " + tx);
                 return false;
@@ -41,12 +55,12 @@ public class Blockchain {
         }
 
         Block previous = getLatestBlock();
-        Block newBlock = new Block(previous.getIndex() + 1, transactions, previous.getHash(), difficulty);
+        Block newBlock = new Block(previous.getIndex() + 1, txsWithCoinbase, previous.getHash(), difficulty);
         chain.add(newBlock);
 
         int outputIndex = 0;
-        for (Transaction tx : transactions) {
-            if (tx.from().equals("GENESIS") || tx.from().equals("GENESIS_AUDITOR")) {
+        for (Transaction tx : txsWithCoinbase) {
+            if (tx.from().equals("COINBASE") || tx.from().equals("GENESIS") || tx.from().equals("GENESIS_AUDITOR")) {
                 utxoSet.put(newBlock.getHash() + ":" + outputIndex, new UTXO(newBlock.getHash(), outputIndex, tx.to(), tx.amount()));
             } else {
                 double remaining = tx.amount();
@@ -85,7 +99,7 @@ public class Blockchain {
         for (Block block : chain) {
             for (Transaction tx : block.getTransactions()) {
                 if (!tx.isValid()) continue;
-                if (tx.from().equals("COINBASE")) {
+                if (tx.from().equals("COINBASE") || tx.from().equals("GENESIS") || tx.from().equals("GENESIS_AUDITOR")) {
                     balances.put(tx.to(), balances.getOrDefault(tx.to(), 0.0) + tx.amount());
                 } else {
                     balances.put(tx.from(), balances.getOrDefault(tx.from(), 0.0) - tx.amount());
@@ -96,7 +110,7 @@ public class Blockchain {
     }
 
     private boolean isTransactionValid(Transaction tx) {
-        if (tx.from().equals("GENESIS") || tx.from().equals("GENESIS_AUDITOR")) return true;
+        if (tx.from().equals("COINBASE") || tx.from().equals("GENESIS") || tx.from().equals("GENESIS_AUDITOR")) return true;
         double saldo = getBalance(tx.from());
         return saldo >= tx.amount();
     }

@@ -37,19 +37,19 @@ public class MultiNodeDemo {
         try { Thread.sleep(2000); } catch (InterruptedException ignored) {}
 
         Transaction tA1 = Transaction.createSigned(satoshi, alice.getAddress(), 20.0);
-        chainA.addBlock(List.of(tA1));
+        chainA.addBlock(List.of(tA1), satoshi.getAddress()); // pass miner address
         nodeA.broadcastBlock(chainA.getLatestBlock());
 
         Transaction tB1 = Transaction.createSigned(alice, bob.getAddress(), 5.0);
-        chainB.addBlock(List.of(tB1));
+        chainB.addBlock(List.of(tB1), alice.getAddress());
         nodeB.broadcastBlock(chainB.getLatestBlock());
 
         Transaction tC1 = Transaction.createSigned(bob, carol.getAddress(), 2.0);
-        chainC.addBlock(List.of(tC1));
+        chainC.addBlock(List.of(tC1), bob.getAddress());
         nodeC.broadcastBlock(chainC.getLatestBlock());
 
         Transaction tD1 = Transaction.createSigned(carol, alice.getAddress(), 1.0);
-        chainD.addBlock(List.of(tD1));
+        chainD.addBlock(List.of(tD1), carol.getAddress());
         nodeD.broadcastBlock(chainD.getLatestBlock());
 
         // Let the network synchronize a bit

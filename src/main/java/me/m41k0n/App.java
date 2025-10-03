@@ -15,23 +15,13 @@ public class App {
         printBalances(blockchain, satoshi, alice, bob, carol);
         printSeparator();
 
-        Transaction t1 = Transaction.createSigned(alice, bob.getAddress(), 10.0);
-        processTransaction(blockchain, "Attempt: Alice pays Bob 10.0 BTC", t1, alice, bob, carol, satoshi);
-
-        Transaction t2 = Transaction.createSigned(satoshi, alice.getAddress(), 25.0);
-        processTransaction(blockchain, "Satoshi pays Alice 25.0 BTC", t2, alice, bob, carol, satoshi);
-
-        Transaction t3 = Transaction.createSigned(alice, bob.getAddress(), 10.0);
-        processTransaction(blockchain, "Alice pays Bob 10.0 BTC", t3, alice, bob, carol, satoshi);
-
-        Transaction t4 = Transaction.createSigned(bob, carol.getAddress(), 15.0);
-        processTransaction(blockchain, "Attempt: Bob pays Carol 15.0 BTC", t4, alice, bob, carol, satoshi);
-
-        Transaction t5 = Transaction.createSigned(bob, carol.getAddress(), 7.0);
-        processTransaction(blockchain, "Bob pays Carol 7.0 BTC", t5, alice, bob, carol, satoshi);
-
-        Transaction t6 = Transaction.createSigned(alice, carol.getAddress(), 5.0);
-        processTransaction(blockchain, "Alice pays Carol 5.0 BTC", t6, alice, bob, carol, satoshi);
+        // Agora sempre informa o minerador ao adicionar um bloco!
+        processTransaction(blockchain, "Attempt: Alice pays Bob 10.0 BTC", Transaction.createSigned(alice, bob.getAddress(), 10.0), alice, bob, carol, satoshi, alice);
+        processTransaction(blockchain, "Satoshi pays Alice 25.0 BTC", Transaction.createSigned(satoshi, alice.getAddress(), 25.0), alice, bob, carol, satoshi, satoshi);
+        processTransaction(blockchain, "Alice pays Bob 10.0 BTC", Transaction.createSigned(alice, bob.getAddress(), 10.0), alice, bob, carol, satoshi, alice);
+        processTransaction(blockchain, "Attempt: Bob pays Carol 15.0 BTC", Transaction.createSigned(bob, carol.getAddress(), 15.0), alice, bob, carol, satoshi, bob);
+        processTransaction(blockchain, "Bob pays Carol 7.0 BTC", Transaction.createSigned(bob, carol.getAddress(), 7.0), alice, bob, carol, satoshi, bob);
+        processTransaction(blockchain, "Alice pays Carol 5.0 BTC", Transaction.createSigned(alice, carol.getAddress(), 5.0), alice, bob, carol, satoshi, alice);
 
         System.out.println("Full blockchain:");
         for (Block block : blockchain.getBlocks()) {
@@ -52,9 +42,10 @@ public class App {
             Wallet alice,
             Wallet bob,
             Wallet carol,
-            Wallet satoshi
+            Wallet satoshi,
+            Wallet miner
     ) {
-        boolean added = blockchain.addBlock(List.of(transaction));
+        boolean added = blockchain.addBlock(List.of(transaction), miner.getAddress());
         System.out.println(description);
         System.out.println("Transaction valid? " + added);
         printBalances(blockchain, satoshi, alice, bob, carol);
